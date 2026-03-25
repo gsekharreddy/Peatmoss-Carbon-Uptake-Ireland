@@ -144,8 +144,11 @@ Generates four publication-quality plots:
 
 ## Installation & Dependencies
 
-### Requirements
+### System Requirements
 - Python 3.8+
+
+### Required Packages
+All dependencies are listed in `requirements.txt`:
 - pandas
 - numpy
 - scikit-learn
@@ -156,12 +159,19 @@ Generates four publication-quality plots:
 - joblib
 
 ### Install Dependencies
+
+#### Option 1: Using requirements.txt (Recommended)
+```bash
+pip install -r requirements.txt
+```
+
+#### Option 2: Manual installation
 ```bash
 pip install pandas numpy scikit-learn matplotlib seaborn xgboost torch joblib
 ```
 
-### For PyTorch (if not using pip)
-Visit [pytorch.org](https://pytorch.org) for platform-specific installation.
+### PyTorch Installation Note
+For platform-specific or GPU-enabled PyTorch installation, visit [pytorch.org](https://pytorch.org) to generate a custom install command for your system.
 
 ---
 
