@@ -1,4 +1,6 @@
 # Sphagnum Carbon Uptake: Precipitation Frequency & Drought Effects
+#TODO
+Augment the datasets so that the very low R2 score of the model will be compensated
 
 ## Overview
 
