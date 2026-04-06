@@ -63,6 +63,17 @@ This folder contains advanced evaluation tools for comprehensive analysis of the
 - Model rankings (by R², RMSE, MAE)
 - Overall best model determination
 
+### 3. `correlation_matrix.py`
+**Purpose:** Builds a Pearson correlation matrix for the 4 model prediction outputs
+
+**Output:**
+- **model_prediction_correlation_matrix.csv** - Numerical correlation matrix for the 4 models
+- **model_prediction_correlation_matrix.png** - Heatmap visualization of the correlation matrix
+
+**What it measures:**
+- Correlation between the test-set predictions from XGBoost, Random Forest, SVR, and PyTorch LSTM
+- Helps identify whether the models behave similarly or capture different patterns
+
 ## Usage
 
 ### Running the scripts:
@@ -73,6 +84,9 @@ python regression_visualization.py
 
 # Perform extensive evaluation
 python extensive_evaluation.py
+
+# Generate the 4-model correlation matrix
+python correlation_matrix.py
 ```
 
 ### Expected behavior:
@@ -90,13 +104,16 @@ advanced_evaluation/
 ├── README.md (this file)
 ├── regression_visualization.py
 ├── extensive_evaluation.py
+├── correlation_matrix.py
 ├── plots/
 │   ├── xgboost_evaluation.png
 │   ├── random_forest_evaluation.png
 │   ├── svr_evaluation.png
 │   ├── pytorch_lstm_evaluation.png
 │   ├── model_comparison.png
-│   └── metrics_summary.csv
+│   ├── metrics_summary.csv
+│   ├── model_prediction_correlation_matrix.csv
+│   └── model_prediction_correlation_matrix.png
 └── reports/
     ├── detailed_evaluation_metrics.csv
     ├── model_rankings.csv

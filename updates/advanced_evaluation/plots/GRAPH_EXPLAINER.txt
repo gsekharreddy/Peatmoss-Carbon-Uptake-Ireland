@@ -1,0 +1,184 @@
+GRAPH EXPLAINER - ADVANCED EVALUATION PLOTS
+==========================================
+
+Location
+--------
+This explainer covers all graphs in:
+updates/advanced_evaluation/plots/
+
+Files covered:
+- model_comparison.png
+- xgboost_evaluation.png
+- random_forest_evaluation.png
+- svr_evaluation.png
+- pytorch_lstm_evaluation.png
+- model_prediction_correlation_matrix.png
+- metrics_summary.csv
+- model_prediction_correlation_matrix.csv
+
+
+1) DATASET, FEATURES, TARGET, AND SPLIT
+======================================
+Dataset used:
+- Dataset 2_Carbon_fluxes.dat (tab-separated)
+
+Core variables used for these models:
+- Species (categorical; label-encoded to Species_encoded)
+- Freq (precipitation frequency)
+- WTgroup (water table group/state)
+- NEE (target: Net Ecosystem Exchange)
+
+Preprocessing steps used in evaluation scripts:
+- Rows with missing target are removed: NEE != -999
+- Species converted to numeric using LabelEncoder
+- Feature scaling with StandardScaler for all models
+- Target y additionally scaled only for LSTM training stability, then inverse-transformed
+
+Data volume in the saved evaluation report:
+- Total samples: 222
+- Train samples: 177
+- Test samples: 45
+- Number of features: 3
+- Train/test split: 80/20 (random_state=42)
+
+
+2) MODELS AND ALGORITHMS
+========================
+1. XGBoost Regressor
+- n_estimators=200, learning_rate=0.05, max_depth=4
+- Strength: captures non-linear feature interactions and complex boundaries.
+
+2. Random Forest Regressor
+- n_estimators=100
+- Strength: robust ensemble averaging; generally stable with noisy ecological data.
+
+3. SVR (Support Vector Regression)
+- kernel=RBF, C=1.0, epsilon=0.1
+- Strength: learns smooth non-linear relationships with margin-based regularization.
+
+4. PyTorch LSTM
+- Input size=3, hidden size=16, epochs=150, optimizer=Adam(lr=0.01)
+- Adapted as a tabular regressor by using sequence length 1 in these scripts.
+
+
+3) HOW TO READ model_comparison.png
+===================================
+This figure has TWO subgraphs.
+
+A) Left panel: RMSE vs MAE Comparison (grouped bars)
+- X-axis points: each model name.
+- Y-axis values: error magnitude.
+- Pink bar = RMSE, Gold bar = MAE.
+- Interpretation:
+  - Lower bars are better.
+  - If RMSE is much higher than MAE, large outlier errors exist.
+
+B) Right panel: Model Performance (R2 Score) (horizontal bars)
+- Y-axis points: each model.
+- X-axis value: R2 score (0 to 1).
+- Text labels on bars are exact R2 points.
+- Interpretation:
+  - Higher R2 means more variance in NEE explained by the model.
+
+Primary points from metrics_summary.csv:
+- XGBoost: RMSE=0.3245, MAE=0.2626, R2=0.7103
+- Random Forest: RMSE=0.3324, MAE=0.2668, R2=0.6961
+- SVR: RMSE=0.3351, MAE=0.2731, R2=0.6911
+- PyTorch LSTM: RMSE=0.3689, MAE=0.3009, R2=0.6257
+
+What this means:
+- Best overall in this plot: XGBoost (lowest RMSE/MAE and highest R2).
+- Random Forest and SVR are close to each other and competitive.
+- PyTorch LSTM has larger prediction error and lower explained variance.
+
+Important reproducibility note:
+- A separate evaluation report in reports/EVALUATION_REPORT.txt shows another LSTM run with slightly better values (R2 around 0.6577).
+- This run-to-run variation is expected because neural training is stochastic unless all random seeds and deterministic settings are fully fixed.
+
+
+4) HOW TO READ EACH *_evaluation.png (2x2 MATRIX)
+==================================================
+Each model-specific image (xgboost_evaluation.png, random_forest_evaluation.png, etc.) contains 4 subgraphs.
+
+Subgraph 1: Predicted vs Actual
+- Points: each test sample (actual NEE on x, predicted NEE on y).
+- Dashed diagonal line: perfect prediction (y=x).
+- Good model signature: points tightly clustered around the diagonal.
+
+Subgraph 2: Residual Distribution
+- Residual = Actual - Predicted.
+- Histogram bars: frequency of error sizes.
+- Vertical line at 0: no-error center.
+- Good model signature: narrow, roughly symmetric distribution around 0.
+
+Subgraph 3: Q-Q Plot of Residuals
+- Points compare residual quantiles to a normal distribution.
+- Good model signature: points near the reference line.
+- Tail deviation indicates skew/outliers.
+
+Subgraph 4: Residuals vs Predicted
+- X-axis: predicted NEE.
+- Y-axis: residual error.
+- Good model signature: random cloud around y=0 with no visible pattern.
+- Pattern/funnel shape can indicate heteroscedasticity or missed non-linearity.
+
+
+5) HOW TO READ model_prediction_correlation_matrix.png
+=======================================================
+- Heatmap values are Pearson correlations between model prediction vectors on the same test set.
+- Diagonal = 1.0 (model with itself).
+- High off-diagonal values mean two models produce very similar prediction behavior.
+
+Key points from model_prediction_correlation_matrix.csv:
+- Random Forest vs XGBoost: 0.989 (very high agreement)
+- SVR vs PyTorch LSTM: 0.981 (very high agreement)
+- Lowest pair shown: Random Forest vs PyTorch LSTM: 0.946 (still high)
+
+Interpretation:
+- All four models are learning broadly similar structure from this feature set.
+- Because correlation is uniformly high, model gains are more about error calibration and outlier handling than fully different pattern discovery.
+
+
+6) WHY SOME MODELS HAVE HIGHER OR LOWER ACCURACY
+=================================================
+Why XGBoost is highest in this setup:
+- Handles non-linear interactions among Species, Freq, and WTgroup well.
+- Boosting focuses iteratively on hard-to-predict samples.
+- Tree ensembles are robust to mixed ecological signal patterns and moderate noise.
+
+Why Random Forest is close but slightly lower:
+- Strong robustness from bagging, but averaging can smooth extreme patterns.
+- May underfit subtle interaction structure compared with boosted trees.
+
+Why SVR is competitive but slightly lower:
+- RBF kernel captures non-linearity, but performance depends strongly on C/epsilon/gamma tuning.
+- Default-like settings can be good but not fully optimal for all ecological regimes.
+
+Why LSTM is lowest here:
+- LSTM is strongest for true sequential temporal dependencies.
+- In this evaluation pipeline, it is trained on tabular data reshaped as sequence length 1, which limits temporal advantage.
+- Neural models typically need more data and stricter seed control for stable gains.
+
+Data-driven factors affecting all models:
+- Small sample size (222 total) limits model complexity and confidence.
+- Encoded species labels can reduce biological nuance compared with richer feature engineering.
+- NEE can include near-zero/negative values, making some percentage-based metrics unstable.
+
+Metric caveat:
+- MAPE values in the detailed report are extremely large because NEE can be near zero and can change sign.
+- For this target, RMSE/MAE/R2 are more reliable than MAPE.
+
+
+7) QUICK INTERPRETATION CHECKLIST FOR READERS
+==============================================
+Use this order when reading any graph:
+1. Start with model_comparison.png to identify global ranking by RMSE, MAE, and R2.
+2. Open each model's 2x2 evaluation image to inspect point-level behavior and residual quality.
+3. Check the correlation matrix to see whether models are redundant or complementary.
+4. Confirm exact values in metrics_summary.csv and detailed_evaluation_metrics.csv.
+5. Use dataset context (Species/Freq/WTgroup -> NEE) before drawing ecological conclusions.
+
+
+8) FINAL TAKEAWAY
+=================
+For this carbon-flux dataset and current feature set, XGBoost is the best overall model in the comparison plot and in ranking outputs, with Random Forest and SVR close behind. The LSTM result is lower in this tabular formulation, likely because the current setup does not provide a strong temporal-sequence advantage.
